@@ -5,9 +5,7 @@ import com.lly835.bestpay.model.PayResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.math.BigDecimal;
@@ -28,8 +26,7 @@ public class PayController {
 
     @GetMapping("/create")
     public ModelAndView create(@RequestParam(value = "orderId", required = false) String orderId,
-                               @RequestParam(value = "amount", required = false) BigDecimal amount
-    ) {
+                               @RequestParam(value = "amount", required = false) BigDecimal amount) {
         if (StringUtils.isBlank(orderId)){
             orderId = String.valueOf(System.currentTimeMillis());
         }
@@ -37,5 +34,10 @@ public class PayController {
         Map map = new HashMap<>();
         map.put("codeUrl", response.getCodeUrl());
         return new ModelAndView("create", map);
+    }
+
+    @PostMapping("/notify")
+    public void asyncNotify(@RequestBody String notifyData) {
+        payService.asyncNotify(notifyData);
     }
 }
