@@ -52,7 +52,7 @@ public class PayServiceImpl implements PayService {
 
         PayResponse payResponse = bestPayService.pay(request);
 
-        log.info("支付调用结果={}"+ payResponse);
+        log.info("发起支付：payResponse={}"+ payResponse);
         return payResponse;
     }
 
@@ -60,13 +60,27 @@ public class PayServiceImpl implements PayService {
     public String asyncNotify(String notifyData) {
         //1. 签名检验
         PayResponse payResponse = bestPayService.asyncNotify(notifyData);
-        log.info("payResponse={}", payResponse);
+        log.info("异步通知 response={}", payResponse);
         //2. 金额校验（从数据库查订单）
+        //比较严重（正常情况下是不会发生的）发出告警：钉钉、短信
+        PayInfo payInfo = payInfoMapper.selectByOrderNo(Long.parseLong(payResponse.getOrderId()));
+        if (payInfo == null) {
+            //告警
+            throw new RuntimeException("通过orderNo查询到的结果是null");
+        }
+        //如果订单支付状态不是"已支付"
+        if (!payInfo.getPlatformStatus().equals(OrderStatusEnum.SUCCESS.name())) {
+            //Double类型比较大小，精度。1.00  1.0
+            if (payInfo.getPayAmount().compareTo(BigDecimal.valueOf(payResponse.getOrderAmount())) != 0) {
+                //告警
+                throw new RuntimeException("异步通知中的金额和数据库里的不一致，orderNo=" + payResponse.getOrderId());
+            }
 
-
-        //2. 金额校验（从数据库查订单）
-
-        //3. 修改订单支付状态
+            //3. 修改订单支付状态
+            payInfo.setPlatformStatus(OrderStatusEnum.SUCCESS.name());
+            payInfo.setPlatformNumber(payResponse.getOutTradeNo());
+            payInfoMapper.updateByPrimaryKeySelective(payInfo);
+        }
 
         if (payResponse.getPayPlatformEnum() == BestPayPlatformEnum.WX) {
             //4. 告诉微信不要再通知了
@@ -77,6 +91,12 @@ public class PayServiceImpl implements PayService {
         }else if (payResponse.getPayPlatformEnum() == BestPayPlatformEnum.ALIPAY) {
             return "success";
         }
+
         throw new RuntimeException("异步通知中错误的支付平台");
+    }
+
+    @Override
+    public PayInfo queryByOrderId(String orderId) {
+        return payInfoMapper.selectByOrderNo(Long.parseLong(orderId));
     }
 }
