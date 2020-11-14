@@ -1,12 +1,10 @@
 package com.jinage.pay.service.impl;
 
 import com.jinage.pay.service.PayService;
-import com.lly835.bestpay.config.WxPayConfig;
 import com.lly835.bestpay.enums.BestPayTypeEnum;
 import com.lly835.bestpay.model.PayRequest;
 import com.lly835.bestpay.model.PayResponse;
 import com.lly835.bestpay.service.BestPayService;
-import com.lly835.bestpay.service.impl.BestPayServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,17 +38,23 @@ public class PayServiceImpl implements PayService {
 
         PayResponse payResponse = bestPayService.pay(request);
 
-        log.info("支付调用结果：{}"+ payResponse);
+        log.info("支付调用结果={}"+ payResponse);
         return payResponse;
     }
 
     @Override
-    public void asyncNotify(String notifyData) {
+    public String asyncNotify(String notifyData) {
         //1. 签名检验
         PayResponse payResponse = bestPayService.asyncNotify(notifyData);
         log.info("payResponse={}", payResponse);
         //2. 金额校验（从数据库查订单）
 
+
         //3. 修改订单支付状态
+        //4. 告诉微信不要再通知了
+        return "<xml>\n" +
+                "  <return_code><![CDATA[SUCCESS]]></return_code>\n" +
+                "  <return_msg><![CDATA[OK]]></return_msg>\n" +
+                "</xml>";
     }
 }
