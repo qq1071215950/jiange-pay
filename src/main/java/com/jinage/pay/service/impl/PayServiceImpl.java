@@ -1,8 +1,12 @@
 package com.jinage.pay.service.impl;
 
+import com.jinage.pay.dao.PayInfoMapper;
+import com.jinage.pay.enums.PayPlatformEnum;
+import com.jinage.pay.pojo.PayInfo;
 import com.jinage.pay.service.PayService;
 import com.lly835.bestpay.enums.BestPayPlatformEnum;
 import com.lly835.bestpay.enums.BestPayTypeEnum;
+import com.lly835.bestpay.enums.OrderStatusEnum;
 import com.lly835.bestpay.model.PayRequest;
 import com.lly835.bestpay.model.PayResponse;
 import com.lly835.bestpay.service.BestPayService;
@@ -24,6 +28,9 @@ public class PayServiceImpl implements PayService {
     @Autowired
     private BestPayService bestPayService;
 
+    @Autowired
+    private PayInfoMapper payInfoMapper;
+
     /**
      * 发起支付
      * @param orderId 订单号
@@ -31,6 +38,12 @@ public class PayServiceImpl implements PayService {
      */
     @Override
     public PayResponse create(String orderId, BigDecimal amount, BestPayTypeEnum bestPayTypeEnum) {
+        //写入数据库
+        PayInfo payInfo = new PayInfo(Long.parseLong(orderId),
+                PayPlatformEnum.getByBestPayTypeEnum(bestPayTypeEnum).getCode(),
+                OrderStatusEnum.NOTPAY.name(),
+                amount);
+        payInfoMapper.insertSelective(payInfo);
         PayRequest request = new PayRequest();
         request.setOrderName("6833476"+"订单测试");
         request.setOrderId(orderId);
