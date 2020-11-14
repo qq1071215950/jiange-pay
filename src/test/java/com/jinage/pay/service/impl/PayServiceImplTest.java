@@ -2,6 +2,7 @@ package com.jinage.pay.service.impl;
 
 import com.jinage.pay.PayApplicationTests;
 import com.jinage.pay.service.PayService;
+import com.lly835.bestpay.enums.BestPayTypeEnum;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -22,6 +23,6 @@ public class PayServiceImplTest extends PayApplicationTests {
     @Test
     public void create(){
         String orderId = String.valueOf(System.currentTimeMillis());
-        payService.create(orderId, BigDecimal.valueOf(0.01));
+        payService.create(orderId, BigDecimal.valueOf(0.01), BestPayTypeEnum.ALIPAY_PC);
     }
 }
